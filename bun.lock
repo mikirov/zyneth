@@ -44,6 +44,7 @@
       "version": "0.0.1",
       "dependencies": {
         "drizzle-orm": "0.41.0",
+        "hono": "^4.12.5",
         "ponder": "0.15.17",
         "viem": "2.43.3",
       },

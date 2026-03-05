@@ -56,3 +56,58 @@ export const vaultSnapshot = onchainTable(
     vaultIdx: index('vault_snapshot_vault_idx').on(t.vault),
   }),
 )
+
+export const navReport = onchainTable(
+  'nav_report',
+  (t) => ({
+    id: t.text().primaryKey(),
+    vault: t.hex().notNull(),
+    newNav: t.bigint().notNull(),
+    managementFee: t.bigint().notNull(),
+    performanceFee: t.bigint().notNull(),
+    chainId: t.integer().notNull(),
+    blockNumber: t.integer().notNull(),
+    timestamp: t.timestamp({ withTimezone: true }).notNull(),
+    txnHash: t.hex().notNull(),
+  }),
+  (t) => ({
+    vaultIdx: index('nav_report_vault_idx').on(t.vault),
+  }),
+)
+
+export const basketUpdate = onchainTable(
+  'basket_update',
+  (t) => ({
+    id: t.text().primaryKey(),
+    vault: t.hex().notNull(),
+    tokens: t.text().notNull(),
+    weights: t.text().notNull(),
+    chainId: t.integer().notNull(),
+    blockNumber: t.integer().notNull(),
+    timestamp: t.timestamp({ withTimezone: true }).notNull(),
+    txnHash: t.hex().notNull(),
+  }),
+  (t) => ({
+    vaultIdx: index('basket_update_vault_idx').on(t.vault),
+  }),
+)
+
+export const vaultTransfer = onchainTable(
+  'vault_transfer',
+  (t) => ({
+    id: t.text().primaryKey(),
+    vault: t.hex().notNull(),
+    from: t.hex().notNull(),
+    to: t.hex().notNull(),
+    value: t.bigint().notNull(),
+    chainId: t.integer().notNull(),
+    blockNumber: t.integer().notNull(),
+    timestamp: t.timestamp({ withTimezone: true }).notNull(),
+    txnHash: t.hex().notNull(),
+  }),
+  (t) => ({
+    vaultIdx: index('vault_transfer_vault_idx').on(t.vault),
+    fromIdx: index('vault_transfer_from_idx').on(t.from),
+    toIdx: index('vault_transfer_to_idx').on(t.to),
+  }),
+)

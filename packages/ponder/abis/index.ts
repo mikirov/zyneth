@@ -1,1 +1,1 @@
-export { ERC4626Abi } from './ERC4626Abi'
+export { ZynethVaultAbi } from './ERC4626Abi'

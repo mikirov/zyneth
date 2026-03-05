@@ -1,4 +1,5 @@
-export const ERC4626Abi = [
+export const ZynethVaultAbi = [
+  // ERC4626 events
   {
     type: 'event',
     name: 'Deposit',
@@ -29,6 +30,56 @@ export const ERC4626Abi = [
       { name: 'value', type: 'uint256', indexed: false },
     ],
   },
+  // ZynethVault custom events
+  {
+    type: 'event',
+    name: 'NavReported',
+    inputs: [
+      { name: 'newNav', type: 'uint256', indexed: false },
+      { name: 'managementFee', type: 'uint256', indexed: false },
+      { name: 'performanceFee', type: 'uint256', indexed: false },
+    ],
+  },
+  {
+    type: 'event',
+    name: 'BasketUpdated',
+    inputs: [
+      { name: 'tokens', type: 'address[]', indexed: false },
+      { name: 'weights', type: 'uint256[]', indexed: false },
+    ],
+  },
+  {
+    type: 'event',
+    name: 'FeesUpdated',
+    inputs: [
+      { name: 'managementBps', type: 'uint256', indexed: false },
+      { name: 'performanceBps', type: 'uint256', indexed: false },
+      { name: 'redemptionBps', type: 'uint256', indexed: false },
+    ],
+  },
+  {
+    type: 'event',
+    name: 'DepositCapUpdated',
+    inputs: [{ name: 'newCap', type: 'uint256', indexed: false }],
+  },
+  {
+    type: 'event',
+    name: 'TokenSwept',
+    inputs: [
+      { name: 'token', type: 'address', indexed: true },
+      { name: 'amount', type: 'uint256', indexed: false },
+    ],
+  },
+  {
+    type: 'event',
+    name: 'Executed',
+    inputs: [
+      { name: 'target', type: 'address', indexed: true },
+      { name: 'value', type: 'uint256', indexed: false },
+      { name: 'data', type: 'bytes', indexed: false },
+    ],
+  },
+  // View functions
   {
     type: 'function',
     name: 'totalAssets',
