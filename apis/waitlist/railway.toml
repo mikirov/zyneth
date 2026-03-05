@@ -1,0 +1,18 @@
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "./apis/waitlist/Dockerfile"
+watchPatterns = [
+    "apis/waitlist/**",
+    "packages/**",
+    "!/*.md",
+    "bun.lock",
+    "package.json",
+]
+
+[deploy]
+numReplicas = 1
+healthcheckPath = "/health"
+sleepApplication = true
+restartPolicyType = "ALWAYS"
+restartPolicyMaxRetries = 10
+region = "europe-west4"

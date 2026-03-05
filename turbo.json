@@ -4,7 +4,7 @@
   "globalDependencies": ["tsconfig.json"],
   "tasks": {
     "build": {
-      "outputs": [".next/**/*", "!.next/cache/**", "dist/**/*"],
+      "outputs": ["dist/**/*"],
       "dependsOn": ["^build"],
       "cache": true
     },

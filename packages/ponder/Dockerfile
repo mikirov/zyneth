@@ -1,0 +1,19 @@
+FROM node:22-slim AS build
+
+RUN npm install -g bun@1.3.5
+WORKDIR /app
+COPY . .
+RUN bun install --frozen-lockfile --prefer-offline --ignore-scripts
+
+ARG TURBO_TEAM
+ENV TURBO_TEAM=$TURBO_TEAM
+ARG TURBO_TOKEN
+ENV TURBO_TOKEN=$TURBO_TOKEN
+ARG DATABASE_URL
+ENV DATABASE_URL=$DATABASE_URL
+ARG PORT
+ENV PORT=$PORT
+ARG RAILWAY_DEPLOYMENT_ID
+ENV RAILWAY_DEPLOYMENT_ID=$RAILWAY_DEPLOYMENT_ID
+
+CMD bun turbo start --filter @zyneth/ponder -- --port $PORT

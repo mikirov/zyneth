@@ -1,4 +1,12 @@
 import { createDb, waitlist } from '@zyneth/database'
+import { z } from 'zod'
+
+const waitlistSchema = z.object({
+  firstName: z.string().min(1, 'First name is required').max(255),
+  lastName: z.string().min(1, 'Last name is required').max(255),
+  email: z.string().email('Invalid email address').max(255),
+  interests: z.string().optional(),
+})
 
 const db = createDb(process.env.DATABASE_URL!)
 
@@ -21,20 +29,17 @@ const server = Bun.serve({
 
     if (url.pathname === '/api/waitlist' && req.method === 'POST') {
       try {
-        const body = (await req.json()) as {
-          firstName?: string
-          lastName?: string
-          email?: string
-          interests?: string
-        }
-        const { firstName, lastName, email, interests } = body
+        const body = await req.json()
+        const parsed = waitlistSchema.safeParse(body)
 
-        if (!firstName || !lastName || !email) {
+        if (!parsed.success) {
           return Response.json(
-            { error: 'firstName, lastName, and email are required' },
+            { error: 'Validation failed', issues: parsed.error.issues },
             { status: 400, headers: corsHeaders },
           )
         }
+
+        const { firstName, lastName, email, interests } = parsed.data
 
         const result = await db
           .insert(waitlist)

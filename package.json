@@ -6,17 +6,14 @@
     "packages": [
       "config/*",
       "packages/*",
-      "apis/*",
-      "apps/*"
+      "apis/*"
     ]
   },
   "scripts": {
     "check": "turbo run check --concurrency=100%",
-    "check:apps": "turbo run check --concurrency=100% --filter='./apps/*'",
     "check:packages": "turbo run check --concurrency=100% --filter='./packages/*'",
     "check:apis": "turbo run check --concurrency=100% --filter='./apis/*'",
     "dev": "turbo run dev --parallel --continue",
-    "dev:web": "turbo watch dev --filter=@zyneth/web",
     "build": "turbo run build",
     "lint": "biome check .",
     "lint:fix": "biome check . --write",

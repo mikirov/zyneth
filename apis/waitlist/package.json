@@ -9,7 +9,8 @@
     "start": "bun run src/index.ts"
   },
   "dependencies": {
-    "@zyneth/database": "workspace:*"
+    "@zyneth/database": "workspace:*",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@zyneth/typescript-config": "workspace:*"
