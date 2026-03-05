@@ -2,7 +2,7 @@ FROM oven/bun:1.3.5
 
 WORKDIR /app
 COPY . .
-RUN bun install --frozen-lockfile --ignore-scripts
+RUN bun install --ignore-scripts
 
 ARG TURBO_TEAM
 ENV TURBO_TEAM=$TURBO_TEAM
