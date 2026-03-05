@@ -7,7 +7,7 @@ import {
   vaultTransfer,
   vaultWithdraw,
 } from 'ponder:schema'
-import { ZynethVaultAbi } from '../abis'
+import { ZynethVaultAbi } from '@zyneth/ponder/abis'
 
 ponder.on('ZynethVault:Deposit', async ({ event, context }) => {
   await context.db
