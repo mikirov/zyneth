@@ -15,5 +15,7 @@ ARG PONDER_RPC_URL_11155111
 ENV PONDER_RPC_URL_11155111=$PONDER_RPC_URL_11155111
 ARG PORT
 ENV PORT=$PORT
+ARG RAILWAY_DEPLOYMENT_ID
+ENV RAILWAY_DEPLOYMENT_ID=$RAILWAY_DEPLOYMENT_ID
 
-CMD bun run --cwd apis/ponder start -- --hostname 0.0.0.0 --port $PORT --schema zyneth-ponder
+CMD bun run --cwd apis/ponder start -- --hostname 0.0.0.0 --port $PORT --schema $RAILWAY_DEPLOYMENT_ID --views-schema zyneth-ponder
