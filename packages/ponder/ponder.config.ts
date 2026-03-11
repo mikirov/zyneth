@@ -22,7 +22,7 @@ export const getConfig = (rpc: HttpTransport) => {
           '0x57A6F5beDB12BDeba4D5458893b92eA21363F9D3', // Real RWA
           '0x4c6b20938E885f4C535A94271826aaa7F4f52c9a', // Real DeFi
         ],
-        startBlock: 27_000_000,
+        startBlock: 43_127_516, // All 6 vaults deployed in this block
       },
     },
   })

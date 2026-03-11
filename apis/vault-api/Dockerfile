@@ -18,6 +18,6 @@ ENV PORT=$PORT
 ARG CORS_ORIGIN
 ENV CORS_ORIGIN=$CORS_ORIGIN
 
-EXPOSE 3002
+EXPOSE 3003
 
 CMD ["bun", "run", "--cwd", "apis/vault-api", "start"]

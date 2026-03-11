@@ -9,7 +9,6 @@ import {
   vaultWithdraw,
 } from 'ponder:schema'
 import { ZynethVaultAbi } from '@zyneth/ponder/abis'
-import { sql } from 'drizzle-orm'
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
@@ -194,14 +193,11 @@ ponder.on('ZynethVault:Transfer', async ({ event, context }) => {
         lastUpdatedBlock: blockNumber,
         lastUpdatedTimestamp: timestamp,
       })
-      .onConflictDoUpdate({
-        target: vaultHolder.id,
-        set: {
-          shares: sql`${vaultHolder.shares} + ${value}`,
-          lastUpdatedBlock: blockNumber,
-          lastUpdatedTimestamp: timestamp,
-        },
-      })
+      .onConflictDoUpdate((row) => ({
+        shares: row.shares + value,
+        lastUpdatedBlock: blockNumber,
+        lastUpdatedTimestamp: timestamp,
+      }))
   }
 
   // Sender loses shares (skip zero-address = mint events)
@@ -216,13 +212,10 @@ ponder.on('ZynethVault:Transfer', async ({ event, context }) => {
         lastUpdatedBlock: blockNumber,
         lastUpdatedTimestamp: timestamp,
       })
-      .onConflictDoUpdate({
-        target: vaultHolder.id,
-        set: {
-          shares: sql`${vaultHolder.shares} - ${value}`,
-          lastUpdatedBlock: blockNumber,
-          lastUpdatedTimestamp: timestamp,
-        },
-      })
+      .onConflictDoUpdate((row) => ({
+        shares: row.shares - value,
+        lastUpdatedBlock: blockNumber,
+        lastUpdatedTimestamp: timestamp,
+      }))
   }
 })
