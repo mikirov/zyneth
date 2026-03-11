@@ -111,3 +111,19 @@ export const vaultTransfer = onchainTable(
     toIdx: index('vault_transfer_to_idx').on(t.to),
   }),
 )
+
+export const vaultHolder = onchainTable(
+  'vault_holder',
+  (t) => ({
+    id: t.text().primaryKey(), // `${vault}-${holder}`
+    vault: t.hex().notNull(),
+    holder: t.hex().notNull(),
+    shares: t.bigint().notNull(),
+    lastUpdatedBlock: t.integer().notNull(),
+    lastUpdatedTimestamp: t.timestamp({ withTimezone: true }).notNull(),
+  }),
+  (t) => ({
+    vaultIdx: index('vault_holder_vault_idx').on(t.vault),
+    holderIdx: index('vault_holder_holder_idx').on(t.holder),
+  }),
+)

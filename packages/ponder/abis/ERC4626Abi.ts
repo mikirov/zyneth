@@ -79,6 +79,18 @@ export const ZynethVaultAbi = [
       { name: 'data', type: 'bytes', indexed: false },
     ],
   },
+  {
+    type: 'event',
+    name: 'EmergencyRedeemed',
+    inputs: [
+      { name: 'user', type: 'address', indexed: true },
+      { name: 'receiver', type: 'address', indexed: true },
+      { name: 'shares', type: 'uint256', indexed: false },
+      { name: 'assets', type: 'uint256', indexed: false },
+    ],
+  },
+  { type: 'event', name: 'Paused', inputs: [] },
+  { type: 'event', name: 'Unpaused', inputs: [] },
   // View functions
   {
     type: 'function',

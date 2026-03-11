@@ -25,6 +25,18 @@
         "@zyneth/typescript-config": "workspace:*",
       },
     },
+    "apis/vault-api": {
+      "name": "@zyneth/vault-api",
+      "version": "0.0.1",
+      "dependencies": {
+        "drizzle-orm": "0.41.0",
+        "postgres": "^3.4.7",
+        "zod": "^4.3.6",
+      },
+      "devDependencies": {
+        "@zyneth/typescript-config": "workspace:*",
+      },
+    },
     "apis/waitlist": {
       "name": "@zyneth/waitlist-api",
       "version": "0.0.1",
@@ -286,6 +298,8 @@
     "@zyneth/ponder-api": ["@zyneth/ponder-api@workspace:apis/ponder"],
 
     "@zyneth/typescript-config": ["@zyneth/typescript-config@workspace:config/typescript"],
+
+    "@zyneth/vault-api": ["@zyneth/vault-api@workspace:apis/vault-api"],
 
     "@zyneth/waitlist-api": ["@zyneth/waitlist-api@workspace:apis/waitlist"],
 

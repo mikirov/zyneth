@@ -3,11 +3,15 @@ import {
   basketUpdate,
   navReport,
   vaultDeposit,
+  vaultHolder,
   vaultSnapshot,
   vaultTransfer,
   vaultWithdraw,
 } from 'ponder:schema'
 import { ZynethVaultAbi } from '@zyneth/ponder/abis'
+import { sql } from 'drizzle-orm'
+
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 ponder.on('ZynethVault:Deposit', async ({ event, context }) => {
   await context.db
@@ -158,18 +162,67 @@ ponder.on('ZynethVault:BasketUpdated', async ({ event, context }) => {
 })
 
 ponder.on('ZynethVault:Transfer', async ({ event, context }) => {
+  const { from, to, value } = event.args
+  const vault = event.log.address
+  const blockNumber = Number(event.block.number)
+  const timestamp = new Date(Number(event.block.timestamp) * 1000)
+
   await context.db
     .insert(vaultTransfer)
     .values({
       id: event.id,
-      vault: event.log.address,
-      from: event.args.from,
-      to: event.args.to,
-      value: event.args.value,
+      vault,
+      from,
+      to,
+      value,
       chainId: context.chain.id,
-      blockNumber: Number(event.block.number),
-      timestamp: new Date(Number(event.block.timestamp) * 1000),
+      blockNumber,
+      timestamp,
       txnHash: event.transaction.hash,
     })
     .onConflictDoNothing()
+
+  // Recipient gains shares
+  if (to !== ZERO_ADDRESS) {
+    await context.db
+      .insert(vaultHolder)
+      .values({
+        id: `${vault}-${to}`,
+        vault,
+        holder: to,
+        shares: value,
+        lastUpdatedBlock: blockNumber,
+        lastUpdatedTimestamp: timestamp,
+      })
+      .onConflictDoUpdate({
+        target: vaultHolder.id,
+        set: {
+          shares: sql`${vaultHolder.shares} + ${value}`,
+          lastUpdatedBlock: blockNumber,
+          lastUpdatedTimestamp: timestamp,
+        },
+      })
+  }
+
+  // Sender loses shares (skip zero-address = mint events)
+  if (from !== ZERO_ADDRESS) {
+    await context.db
+      .insert(vaultHolder)
+      .values({
+        id: `${vault}-${from}`,
+        vault,
+        holder: from,
+        shares: 0n,
+        lastUpdatedBlock: blockNumber,
+        lastUpdatedTimestamp: timestamp,
+      })
+      .onConflictDoUpdate({
+        target: vaultHolder.id,
+        set: {
+          shares: sql`${vaultHolder.shares} - ${value}`,
+          lastUpdatedBlock: blockNumber,
+          lastUpdatedTimestamp: timestamp,
+        },
+      })
+  }
 })

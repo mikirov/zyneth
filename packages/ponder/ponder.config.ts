@@ -15,11 +15,14 @@ export const getConfig = (rpc: HttpTransport) => {
         chain: 'base',
         abi: ZynethVaultAbi,
         address: [
-          '0xD97Bb459f9Bc3d002d5D85F523dDC17E5687A91d', // AI Vault
-          '0x9980c5719B3df5c5b3414BE4fe3bc4aBb32B5e09', // RWA Vault
-          '0x1A2AB9B00Bd14E26F522dDD475f22a7df6e46951', // DeFi Vault
+          '0x91507DEfbCD6c9317216Ae0eb6c332d73E0F24B9', // Mock AI
+          '0xB7A31eF84B864eFaCf024bb7Aac0F0eb4f75A1E4', // Mock RWA
+          '0xbb1A3Df33d6ABdb231584f767918a3cD1E317FB2', // Mock DeFi
+          '0x612317226AE4F06953e7B33Fc9b304586f6C25b7', // Real AI
+          '0x57A6F5beDB12BDeba4D5458893b92eA21363F9D3', // Real RWA
+          '0x4c6b20938E885f4C535A94271826aaa7F4f52c9a', // Real DeFi
         ],
-        startBlock: 43107759,
+        startBlock: 27_000_000,
       },
     },
   })
