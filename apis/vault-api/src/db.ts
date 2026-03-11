@@ -18,7 +18,4 @@ const setDatabaseSchema = <T extends { [name: string]: unknown }>(
 
 setDatabaseSchema(schema, PONDER_SCHEMA_ID)
 
-export const db = drizzle(PONDER_DATABASE_URL, {
-  schema,
-  casing: 'snake_case',
-})
+export const db = drizzle(PONDER_DATABASE_URL, { schema })

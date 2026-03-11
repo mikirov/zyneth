@@ -68,23 +68,28 @@ const server = Bun.serve({
         gt(vaultHolder.shares, 0n),
       )
 
-      const [items, totals] = await Promise.all([
-        db
-          .select({
-            holder: vaultHolder.holder,
-            shares: vaultHolder.shares,
-            lastUpdatedBlock: vaultHolder.lastUpdatedBlock,
-            lastUpdatedTimestamp: vaultHolder.lastUpdatedTimestamp,
-          })
-          .from(vaultHolder)
-          .where(filter)
-          .orderBy(desc(vaultHolder.shares))
-          .limit(size)
-          .offset(page * size),
-        db.select({ total: count() }).from(vaultHolder).where(filter),
-      ])
+      try {
+        const [items, totals] = await Promise.all([
+          db
+            .select({
+              holder: vaultHolder.holder,
+              shares: vaultHolder.shares,
+              lastUpdatedBlock: vaultHolder.lastUpdatedBlock,
+              lastUpdatedTimestamp: vaultHolder.lastUpdatedTimestamp,
+            })
+            .from(vaultHolder)
+            .where(filter)
+            .orderBy(desc(vaultHolder.shares))
+            .limit(size)
+            .offset(page * size),
+          db.select({ total: count() }).from(vaultHolder).where(filter),
+        ])
 
-      return jsonBig({ items, total: totals[0]?.total ?? 0, page, size })
+        return jsonBig({ items, total: totals[0]?.total ?? 0, page, size })
+      } catch (err) {
+        process.stderr.write(`holders query error: ${String(err)}\n`)
+        return jsonBig({ error: String(err) }, { status: 500 })
+      }
     }
 
     return jsonBig({ error: 'Not found' }, { status: 404 })
