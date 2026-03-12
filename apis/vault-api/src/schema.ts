@@ -12,3 +12,15 @@ export const vaultHolder = pgTable('vault_holder', {
     withTimezone: true,
   }).notNull(),
 })
+
+// Mirror of packages/ponder/ponder.schema.ts basketUpdate table.
+export const basketUpdate = pgTable('basket_update', {
+  id: text('id').primaryKey(),
+  vault: text('vault').notNull(),
+  tokens: text('tokens').notNull(),
+  weights: text('weights').notNull(),
+  chainId: integer('chain_id').notNull(),
+  blockNumber: integer('block_number').notNull(),
+  timestamp: timestamp('timestamp', { withTimezone: true }).notNull(),
+  txnHash: text('txn_hash').notNull(),
+})
