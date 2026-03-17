@@ -127,3 +127,20 @@ export const vaultHolder = onchainTable(
     holderIdx: index('vault_holder_holder_idx').on(t.holder),
   }),
 )
+
+export const holderPoints = onchainTable(
+  'holder_points',
+  (t) => ({
+    id: t.text().primaryKey(), // `${vault}-${holder}`
+    vault: t.hex().notNull(),
+    holder: t.hex().notNull(),
+    accumulatedPoints: t.bigint().notNull(), // scaled by 1e18
+    assetsBalance: t.bigint().notNull(), // current balance in USDC terms
+    lastPointsTimestamp: t.timestamp({ withTimezone: true }).notNull(),
+  }),
+  (t) => ({
+    vaultIdx: index('holder_points_vault_idx').on(t.vault),
+    holderIdx: index('holder_points_holder_idx').on(t.holder),
+    pointsIdx: index('holder_points_points_idx').on(t.accumulatedPoints),
+  }),
+)

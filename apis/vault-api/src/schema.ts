@@ -13,6 +13,18 @@ export const vaultHolder = pgTable('vault_holder', {
   }).notNull(),
 })
 
+// Mirror of packages/ponder/ponder.schema.ts holderPoints table.
+export const holderPoints = pgTable('holder_points', {
+  id: text('id').primaryKey(), // `${vault}-${holder}`
+  vault: text('vault').notNull(),
+  holder: text('holder').notNull(),
+  accumulatedPoints: bigint('accumulated_points', { mode: 'bigint' }).notNull(),
+  assetsBalance: bigint('assets_balance', { mode: 'bigint' }).notNull(),
+  lastPointsTimestamp: timestamp('last_points_timestamp', {
+    withTimezone: true,
+  }).notNull(),
+})
+
 // Mirror of packages/ponder/ponder.schema.ts basketUpdate table.
 export const basketUpdate = pgTable('basket_update', {
   id: text('id').primaryKey(),
