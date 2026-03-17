@@ -21,7 +21,7 @@ import {
 const hexString = t.String({ pattern: '^0x[0-9a-fA-F]+$' })
 
 const app = new Elysia()
-  .use(cors({ origin: CORS_ORIGIN }))
+  .use(cors({ origin: CORS_ORIGIN === '*' ? true : CORS_ORIGIN }))
   .get('/health', () => ({ status: 'ok' }))
 
   // ─── Deposit / Mint ─────────────────────────────────────────────────────────
