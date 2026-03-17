@@ -9,7 +9,7 @@ import {
   encodeRedeem,
   encodeRedeemInKind,
 } from './calldata'
-import { CORS_ORIGIN, PORT } from './config'
+import { PORT } from './config'
 import { fetchPriceUpdate, getVaultFeedIds } from './pyth'
 import {
   convertToAssets,
@@ -21,7 +21,7 @@ import {
 const hexString = t.String({ pattern: '^0x[0-9a-fA-F]+$' })
 
 const app = new Elysia()
-  .use(corsHeaders(CORS_ORIGIN))
+  .use(corsHeaders(process.env.CORS_ORIGIN))
   .get('/health', () => ({ status: 'ok' }))
 
   // ─── Deposit / Mint ─────────────────────────────────────────────────────────

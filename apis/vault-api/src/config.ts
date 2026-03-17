@@ -8,8 +8,7 @@ const env = z
       .string()
       .optional()
       .transform((v) => v || 'zyneth-ponder'),
-    CORS_ORIGIN: z.string().default('*'),
   })
   .parse(process.env)
 
-export const { PORT, PONDER_DATABASE_URL, PONDER_SCHEMA_ID, CORS_ORIGIN } = env
+export const { PORT, PONDER_DATABASE_URL, PONDER_SCHEMA_ID } = env
