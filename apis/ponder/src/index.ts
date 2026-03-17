@@ -337,13 +337,18 @@ ponder.on('ZynethVault:Transfer', async ({ event, context }) => {
   }
 
   // --- Points accrual ---
-  // Read and cache pointsStartTimestamp from contract
+  // Read and cache pointsStartTimestamp from contract.
+  // Wrapped in try/catch because early blocks (pre-upgrade) don't have this function.
   if (POINTS_START_CACHE[vault] === undefined) {
-    POINTS_START_CACHE[vault] = await context.client.readContract({
-      abi: ZynethVaultAbi,
-      address: vault,
-      functionName: 'pointsStartTimestamp',
-    })
+    try {
+      POINTS_START_CACHE[vault] = await context.client.readContract({
+        abi: ZynethVaultAbi,
+        address: vault,
+        functionName: 'pointsStartTimestamp',
+      })
+    } catch {
+      POINTS_START_CACHE[vault] = 0n // pre-upgrade: no points
+    }
   }
   const pointsStart = POINTS_START_CACHE[vault]
 
@@ -411,31 +416,42 @@ async function ensureVaultState(
   const existing = await context.db.find(vaultState, { id: vault })
   if (existing) return
 
-  const [paused, redemptionFeeBps, managementFeeBps] = await Promise.all([
-    context.client.readContract({
-      abi: ZynethVaultAbi,
-      address: vault,
-      functionName: 'paused',
-    }),
-    context.client.readContract({
-      abi: ZynethVaultAbi,
-      address: vault,
-      functionName: 'redemptionFeeBps',
-    }),
-    context.client.readContract({
-      abi: ZynethVaultAbi,
-      address: vault,
-      functionName: 'managementFeeBps',
-    }),
-  ])
+  // Wrapped in try/catch because early blocks (pre-upgrade) may not have these functions
+  let paused = false
+  let redemptionFeeBps = 5
+  let managementFeeBps = 100
+  try {
+    const results = await Promise.all([
+      context.client.readContract({
+        abi: ZynethVaultAbi,
+        address: vault,
+        functionName: 'paused',
+      }),
+      context.client.readContract({
+        abi: ZynethVaultAbi,
+        address: vault,
+        functionName: 'redemptionFeeBps',
+      }),
+      context.client.readContract({
+        abi: ZynethVaultAbi,
+        address: vault,
+        functionName: 'managementFeeBps',
+      }),
+    ])
+    paused = results[0] as boolean
+    redemptionFeeBps = Number(results[1])
+    managementFeeBps = Number(results[2])
+  } catch {
+    // Pre-upgrade block: use defaults
+  }
 
   await context.db
     .insert(vaultState)
     .values({
       id: vault,
-      paused: paused as boolean,
-      redemptionFeeBps: Number(redemptionFeeBps),
-      managementFeeBps: Number(managementFeeBps),
+      paused,
+      redemptionFeeBps,
+      managementFeeBps,
       lastUpdatedBlock: blockNumber,
       lastUpdatedTimestamp: timestamp,
     })
