@@ -1,4 +1,3 @@
-import { cors } from '@elysiajs/cors'
 import { Elysia, t } from 'elysia'
 import type { Address, Hex } from 'viem'
 import {
@@ -20,8 +19,22 @@ import {
 
 const hexString = t.String({ pattern: '^0x[0-9a-fA-F]+$' })
 
+const allowOrigin = CORS_ORIGIN === '*' ? '*' : CORS_ORIGIN
+
 const app = new Elysia()
-  .use(cors({ origin: CORS_ORIGIN === '*' ? true : CORS_ORIGIN }))
+  .onRequest(({ set, request }) => {
+    if (request.method === 'OPTIONS') {
+      set.headers['Access-Control-Allow-Origin'] = allowOrigin
+      set.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+      set.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+      set.headers['Access-Control-Max-Age'] = '86400'
+      set.status = 204
+      return ''
+    }
+  })
+  .onAfterHandle(({ set }) => {
+    set.headers['Access-Control-Allow-Origin'] = allowOrigin
+  })
   .get('/health', () => ({ status: 'ok' }))
 
   // ─── Deposit / Mint ─────────────────────────────────────────────────────────
