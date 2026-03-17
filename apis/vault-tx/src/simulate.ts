@@ -1,5 +1,6 @@
 import {
   type Address,
+  type ContractFunctionRevertedError,
   createPublicClient,
   decodeErrorResult,
   type Hex,
@@ -43,41 +44,49 @@ export async function simulateTx(
 function decodeRevertError(err: unknown): string {
   if (!(err instanceof Error)) return String(err)
 
-  // Try to extract revert data from the error
-  const msg = err.message
-
-  // viem includes hex data in errors — try to decode it
-  const dataMatch = msg.match(/data:\s*"?(0x[0-9a-fA-F]+)"?/)
-  if (dataMatch) {
-    try {
-      const decoded = decodeErrorResult({
-        abi: vaultAbi,
-        data: dataMatch[1] as Hex,
-      })
-      if (decoded.errorName && REVERT_MESSAGES[decoded.errorName]) {
-        return REVERT_MESSAGES[decoded.errorName]
-      }
-      return `Contract error: ${decoded.errorName}`
-    } catch {
-      // Selector not in ABI
+  // Walk the cause chain to find ContractFunctionRevertedError or revert data
+  let current: Error | undefined = err
+  while (current) {
+    // viem's ContractFunctionRevertedError has structured data
+    const revertErr = current as ContractFunctionRevertedError & {
+      data?: { errorName?: string; args?: unknown[] }
     }
+    if (
+      revertErr.data?.errorName &&
+      REVERT_MESSAGES[revertErr.data.errorName]
+    ) {
+      return REVERT_MESSAGES[revertErr.data.errorName]
+    }
+
+    // Try extracting hex revert data from message
+    const hexMatch = current.message.match(/data:\s*"?(0x[0-9a-fA-F]{8,})"?/)
+    if (hexMatch) {
+      try {
+        const decoded = decodeErrorResult({
+          abi: vaultAbi,
+          data: hexMatch[1] as Hex,
+        })
+        if (decoded.errorName && REVERT_MESSAGES[decoded.errorName]) {
+          return REVERT_MESSAGES[decoded.errorName]
+        }
+        return `Contract error: ${decoded.errorName}`
+      } catch {
+        // Not a known error selector
+      }
+    }
+
+    // Check for custom error pattern
+    const customMatch = current.message.match(/custom error (\w+)\(\)/)
+    if (customMatch && REVERT_MESSAGES[customMatch[1]]) {
+      return REVERT_MESSAGES[customMatch[1]]
+    }
+
+    // Walk up the cause chain
+    current = (current as Error & { cause?: Error }).cause as Error | undefined
   }
 
-  // Try viem's structured error
-  const errWithData = err as Error & { data?: { errorName?: string } }
-  if (
-    errWithData.data?.errorName &&
-    REVERT_MESSAGES[errWithData.data.errorName]
-  ) {
-    return REVERT_MESSAGES[errWithData.data.errorName]
-  }
-
-  // Fallback to message parsing
-  const customMatch = msg.match(/custom error (\w+)\(\)/)
-  if (customMatch && REVERT_MESSAGES[customMatch[1]]) {
-    return REVERT_MESSAGES[customMatch[1]]
-  }
-
+  // Fallback: extract from top-level message
+  const msg = err.message
   const reasonMatch = msg.match(/reason:\s*(.+?)(?:\n|$)/)
   if (reasonMatch) return reasonMatch[1].trim()
 
