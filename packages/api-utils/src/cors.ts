@@ -14,18 +14,17 @@ import { Elysia } from 'elysia'
 export function corsHeaders(origin?: string) {
   const allowOrigin = origin && origin.trim() !== '' ? origin.trim() : '*'
 
-  return new Elysia({ name: '@zyneth/cors' })
-    .onRequest(({ set, request }) => {
-      if (request.method === 'OPTIONS') {
-        set.headers['Access-Control-Allow-Origin'] = allowOrigin
-        set.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
-        set.headers['Access-Control-Allow-Headers'] = 'Content-Type'
-        set.headers['Access-Control-Max-Age'] = '86400'
-        set.status = 204
-        return ''
-      }
-    })
-    .onAfterHandle(({ set }) => {
-      set.headers['Access-Control-Allow-Origin'] = allowOrigin
-    })
+  return new Elysia({ name: '@zyneth/cors' }).onRequest(({ set, request }) => {
+    // Set CORS header on ALL requests upfront
+    set.headers['Access-Control-Allow-Origin'] = allowOrigin
+
+    // Handle preflight
+    if (request.method === 'OPTIONS') {
+      set.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+      set.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+      set.headers['Access-Control-Max-Age'] = '86400'
+      set.status = 204
+      return ''
+    }
+  })
 }
