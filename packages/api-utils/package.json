@@ -1,0 +1,16 @@
+{
+  "name": "@zyneth/api-utils",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./cors": "./src/cors.ts"
+  },
+  "dependencies": {
+    "elysia": "^1.4.27"
+  },
+  "devDependencies": {
+    "@zyneth/typescript-config": "workspace:*"
+  }
+}

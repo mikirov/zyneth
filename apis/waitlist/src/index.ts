@@ -1,11 +1,11 @@
-import cors from '@elysiajs/cors'
+import { corsHeaders } from '@zyneth/api-utils'
 import { createDb, waitlist } from '@zyneth/database'
 import { Elysia, t } from 'elysia'
 
 const db = createDb(process.env.DATABASE_URL!)
 
 new Elysia()
-  .use(cors({ origin: process.env.CORS_ORIGIN || '*' }))
+  .use(corsHeaders(process.env.CORS_ORIGIN))
   .get('/health', () => ({ status: 'ok' }))
   .post(
     '/api/waitlist',

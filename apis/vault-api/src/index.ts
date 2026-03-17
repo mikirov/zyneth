@@ -1,4 +1,4 @@
-import cors from '@elysiajs/cors'
+import { corsHeaders } from '@zyneth/api-utils'
 import { and, count, desc, eq, gt, sql } from 'drizzle-orm'
 import { Elysia, t } from 'elysia'
 import { CORS_ORIGIN, PORT } from './config'
@@ -12,7 +12,7 @@ import { basketUpdate, holderPoints, vaultHolder } from './schema'
   }
 
 new Elysia()
-  .use(cors({ origin: CORS_ORIGIN === '*' ? true : CORS_ORIGIN }))
+  .use(corsHeaders(CORS_ORIGIN))
   .get('/health', () => ({ status: 'ok' }))
   .get(
     '/holders',

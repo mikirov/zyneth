@@ -1,3 +1,4 @@
+import { corsHeaders } from '@zyneth/api-utils'
 import { Elysia, t } from 'elysia'
 import type { Address, Hex } from 'viem'
 import {
@@ -19,22 +20,8 @@ import {
 
 const hexString = t.String({ pattern: '^0x[0-9a-fA-F]+$' })
 
-const allowOrigin = CORS_ORIGIN === '*' ? '*' : CORS_ORIGIN
-
 const app = new Elysia()
-  .onRequest(({ set, request }) => {
-    if (request.method === 'OPTIONS') {
-      set.headers['Access-Control-Allow-Origin'] = allowOrigin
-      set.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
-      set.headers['Access-Control-Allow-Headers'] = 'Content-Type'
-      set.headers['Access-Control-Max-Age'] = '86400'
-      set.status = 204
-      return ''
-    }
-  })
-  .onAfterHandle(({ set }) => {
-    set.headers['Access-Control-Allow-Origin'] = allowOrigin
-  })
+  .use(corsHeaders(CORS_ORIGIN))
   .get('/health', () => ({ status: 'ok' }))
 
   // ─── Deposit / Mint ─────────────────────────────────────────────────────────
