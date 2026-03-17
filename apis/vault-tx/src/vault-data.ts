@@ -4,16 +4,39 @@ import { base } from 'viem/chains'
 import { vaultAbi } from './abi'
 import { RPC_URL } from './config'
 import { db } from './db'
-import { basketUpdate, vaultHolder, vaultSnapshot, vaultState } from './schema'
+import {
+  basketUpdate,
+  holderPoints,
+  vaultHolder,
+  vaultSnapshot,
+  vaultState,
+} from './schema'
 
 const publicClient = createPublicClient({
   chain: base,
   transport: http(RPC_URL),
 })
 
+// Points: 1 point per $100 USDC per day, scaled by 1e18
+const POINTS_PRECISION = 10n ** 18n
+const HUNDRED_USDC = 100_000_000n
+const SECONDS_PER_DAY = 86400n
+
 export interface BasketToken {
   address: string
   weight: string
+}
+
+export interface UserData {
+  shareBalance: string
+  shareValue: string
+  usdcBalance: string
+  usdcAllowance: string
+  points: {
+    accumulated: string
+    pending: string
+    total: string
+  }
 }
 
 export interface VaultData {
@@ -25,12 +48,7 @@ export interface VaultData {
   managementFeeBps: number
   basket: BasketToken[]
   vaultUsdcBalance: string
-  user?: {
-    shareBalance: string
-    shareValue: string
-    usdcBalance: string
-    usdcAllowance: string
-  }
+  user?: UserData
 }
 
 export async function getVaultData(
@@ -44,8 +62,7 @@ export async function getVaultData(
   const vaultLower = vault.toLowerCase()
 
   // Parallel DB queries
-  const [snapshot, state, basket, holder] = await Promise.all([
-    // Latest snapshot for this vault
+  const [snapshot, state, basket, holder, points] = await Promise.all([
     db
       .select()
       .from(vaultSnapshot)
@@ -54,7 +71,6 @@ export async function getVaultData(
       .limit(1)
       .then((rows) => rows[0] ?? null),
 
-    // Vault state (paused, fees)
     db
       .select()
       .from(vaultState)
@@ -62,7 +78,6 @@ export async function getVaultData(
       .limit(1)
       .then((rows) => rows[0] ?? null),
 
-    // Latest basket update
     db
       .select()
       .from(basketUpdate)
@@ -71,7 +86,6 @@ export async function getVaultData(
       .limit(1)
       .then((rows) => rows[0] ?? null),
 
-    // User's share balance (if user provided)
     user
       ? db
           .select()
@@ -80,9 +94,17 @@ export async function getVaultData(
           .limit(1)
           .then((rows) => rows[0] ?? null)
       : Promise.resolve(null),
+
+    user
+      ? db
+          .select()
+          .from(holderPoints)
+          .where(eq(holderPoints.id, `${vaultLower}-${user.toLowerCase()}`))
+          .limit(1)
+          .then((rows) => rows[0] ?? null)
+      : Promise.resolve(null),
   ])
 
-  // Parse basket tokens/weights from JSON
   const basketTokens: BasketToken[] = basket
     ? (() => {
         const tokens: string[] = JSON.parse(basket.tokens)
@@ -94,7 +116,6 @@ export async function getVaultData(
       })()
     : []
 
-  // Compute share value from snapshot data
   const totalAssets = snapshot?.totalAssets ?? 0n
   const totalSupply = snapshot?.totalShares ?? 0n
   const sharePrice = snapshot?.sharePrice ?? 0n
@@ -102,50 +123,85 @@ export async function getVaultData(
   const userShareValue =
     totalSupply > 0n ? (userShares * totalAssets) / totalSupply : 0n
 
-  // RPC calls for data that can't be indexed (USDC balances + allowance)
+  // Single multicall for all RPC reads (USDC balances + allowance + asset address)
   const asset = (await publicClient.readContract({
     address: vault,
     abi: vaultAbi,
     functionName: 'asset',
   })) as Address
 
-  const rpcCalls = [
-    publicClient.readContract({
+  const multicallContracts = [
+    {
       address: asset,
       abi: erc20Abi,
-      functionName: 'balanceOf',
-      args: [vault],
-    }),
+      functionName: 'balanceOf' as const,
+      args: [vault] as const,
+    },
+    ...(user
+      ? [
+          {
+            address: asset,
+            abi: erc20Abi,
+            functionName: 'balanceOf' as const,
+            args: [user] as const,
+          },
+          {
+            address: asset,
+            abi: erc20Abi,
+            functionName: 'allowance' as const,
+            args: [user, vault] as const,
+          },
+        ]
+      : []),
   ]
 
+  const rpcResults = await publicClient.multicall({
+    contracts: multicallContracts,
+    allowFailure: true,
+  })
+
+  const vaultUsdcBalance =
+    rpcResults[0].status === 'success' ? (rpcResults[0].result as bigint) : 0n
+
+  let userData: UserData | undefined
   if (user) {
-    rpcCalls.push(
-      publicClient.readContract({
-        address: asset,
-        abi: erc20Abi,
-        functionName: 'balanceOf',
-        args: [user],
-      }),
-      publicClient.readContract({
-        address: asset,
-        abi: erc20Abi,
-        functionName: 'allowance',
-        args: [user, vault],
-      }),
-    )
-  }
+    const usdcBalance =
+      rpcResults[1]?.status === 'success'
+        ? (rpcResults[1].result as bigint)
+        : 0n
+    const usdcAllowance =
+      rpcResults[2]?.status === 'success'
+        ? (rpcResults[2].result as bigint)
+        : 0n
 
-  const rpcResults = await Promise.all(rpcCalls)
-  const vaultUsdcBalance = rpcResults[0] as bigint
-
-  const userData = user
-    ? {
-        shareBalance: userShares.toString(),
-        shareValue: userShareValue.toString(),
-        usdcBalance: (rpcResults[1] as bigint).toString(),
-        usdcAllowance: (rpcResults[2] as bigint).toString(),
+    // Calculate pending points
+    const accumulated = points?.accumulatedPoints ?? 0n
+    let pending = 0n
+    if (points && points.assetsBalance > 0n) {
+      const lastTs = BigInt(
+        Math.floor(points.lastPointsTimestamp.getTime() / 1000),
+      )
+      const nowTs = BigInt(Math.floor(Date.now() / 1000))
+      const elapsed = nowTs - lastTs
+      if (elapsed > 0n) {
+        pending =
+          (points.assetsBalance * elapsed * POINTS_PRECISION) /
+          (HUNDRED_USDC * SECONDS_PER_DAY)
       }
-    : undefined
+    }
+
+    userData = {
+      shareBalance: userShares.toString(),
+      shareValue: userShareValue.toString(),
+      usdcBalance: usdcBalance.toString(),
+      usdcAllowance: usdcAllowance.toString(),
+      points: {
+        accumulated: accumulated.toString(),
+        pending: pending.toString(),
+        total: (accumulated + pending).toString(),
+      },
+    }
+  }
 
   return {
     totalAssets: totalAssets.toString(),
