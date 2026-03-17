@@ -6,6 +6,7 @@ import {
   vaultDeposit,
   vaultHolder,
   vaultSnapshot,
+  vaultState,
   vaultTransfer,
   vaultWithdraw,
 } from 'ponder:schema'
@@ -120,6 +121,14 @@ async function accruePoints(
 }
 
 ponder.on('ZynethVault:Deposit', async ({ event, context }) => {
+  // Initialize vault state on first event if it doesn't exist
+  await ensureVaultState(
+    event.log.address,
+    Number(event.block.number),
+    new Date(Number(event.block.timestamp) * 1000),
+    context,
+  )
+
   await context.db
     .insert(vaultDeposit)
     .values({
@@ -387,4 +396,92 @@ ponder.on('ZynethVault:Transfer', async ({ event, context }) => {
       context.db,
     )
   }
+})
+
+// ─── Vault State: Paused / Fees ──────────────────────────────────────────────
+
+/** Ensure vaultState row exists by reading initial values from the contract. */
+async function ensureVaultState(
+  vault: `0x${string}`,
+  blockNumber: number,
+  timestamp: Date,
+  // biome-ignore lint/suspicious/noExplicitAny: ponder context types
+  context: any,
+) {
+  const existing = await context.db.find(vaultState, { id: vault })
+  if (existing) return
+
+  const [paused, redemptionFeeBps, managementFeeBps] = await Promise.all([
+    context.client.readContract({
+      abi: ZynethVaultAbi,
+      address: vault,
+      functionName: 'paused',
+    }),
+    context.client.readContract({
+      abi: ZynethVaultAbi,
+      address: vault,
+      functionName: 'redemptionFeeBps',
+    }),
+    context.client.readContract({
+      abi: ZynethVaultAbi,
+      address: vault,
+      functionName: 'managementFeeBps',
+    }),
+  ])
+
+  await context.db
+    .insert(vaultState)
+    .values({
+      id: vault,
+      paused: paused as boolean,
+      redemptionFeeBps: Number(redemptionFeeBps),
+      managementFeeBps: Number(managementFeeBps),
+      lastUpdatedBlock: blockNumber,
+      lastUpdatedTimestamp: timestamp,
+    })
+    .onConflictDoNothing()
+}
+
+ponder.on('ZynethVault:Paused', async ({ event, context }) => {
+  const vault = event.log.address
+  const ts = new Date(Number(event.block.timestamp) * 1000)
+  await ensureVaultState(vault, Number(event.block.number), ts, context)
+  await context.db.update(vaultState, { id: vault }).set({
+    paused: true,
+    lastUpdatedBlock: Number(event.block.number),
+    lastUpdatedTimestamp: ts,
+  })
+})
+
+ponder.on('ZynethVault:Unpaused', async ({ event, context }) => {
+  const vault = event.log.address
+  const ts = new Date(Number(event.block.timestamp) * 1000)
+  await ensureVaultState(vault, Number(event.block.number), ts, context)
+  await context.db.update(vaultState, { id: vault }).set({
+    paused: false,
+    lastUpdatedBlock: Number(event.block.number),
+    lastUpdatedTimestamp: ts,
+  })
+})
+
+ponder.on('ZynethVault:RedemptionFeeUpdated', async ({ event, context }) => {
+  const vault = event.log.address
+  const ts = new Date(Number(event.block.timestamp) * 1000)
+  await ensureVaultState(vault, Number(event.block.number), ts, context)
+  await context.db.update(vaultState, { id: vault }).set({
+    redemptionFeeBps: Number(event.args.redemptionBps),
+    lastUpdatedBlock: Number(event.block.number),
+    lastUpdatedTimestamp: ts,
+  })
+})
+
+ponder.on('ZynethVault:ManagementFeeUpdated', async ({ event, context }) => {
+  const vault = event.log.address
+  const ts = new Date(Number(event.block.timestamp) * 1000)
+  await ensureVaultState(vault, Number(event.block.number), ts, context)
+  await context.db.update(vaultState, { id: vault }).set({
+    managementFeeBps: Number(event.args.newBps),
+    lastUpdatedBlock: Number(event.block.number),
+    lastUpdatedTimestamp: ts,
+  })
 })

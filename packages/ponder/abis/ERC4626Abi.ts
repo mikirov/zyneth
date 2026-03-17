@@ -50,12 +50,13 @@ export const ZynethVaultAbi = [
   },
   {
     type: 'event',
-    name: 'FeesUpdated',
-    inputs: [
-      { name: 'managementBps', type: 'uint256', indexed: false },
-      { name: 'performanceBps', type: 'uint256', indexed: false },
-      { name: 'redemptionBps', type: 'uint256', indexed: false },
-    ],
+    name: 'RedemptionFeeUpdated',
+    inputs: [{ name: 'redemptionBps', type: 'uint256', indexed: false }],
+  },
+  {
+    type: 'event',
+    name: 'ManagementFeeUpdated',
+    inputs: [{ name: 'newBps', type: 'uint256', indexed: false }],
   },
   {
     type: 'event',
@@ -131,6 +132,27 @@ export const ZynethVaultAbi = [
     type: 'function',
     name: 'balanceOf',
     inputs: [{ name: 'owner', type: 'address' }],
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    name: 'paused',
+    inputs: [],
+    outputs: [{ name: '', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    name: 'redemptionFeeBps',
+    inputs: [],
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    name: 'managementFeeBps',
+    inputs: [],
     outputs: [{ name: '', type: 'uint256' }],
     stateMutability: 'view',
   },

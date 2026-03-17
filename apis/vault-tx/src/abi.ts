@@ -69,6 +69,34 @@ export const vaultAbi = [
     outputs: [{ type: 'bytes32' }],
     stateMutability: 'view',
   },
+  {
+    type: 'function',
+    name: 'paused',
+    inputs: [],
+    outputs: [{ type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    name: 'redemptionFeeBps',
+    inputs: [],
+    outputs: [{ type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    name: 'managementFeeBps',
+    inputs: [],
+    outputs: [{ type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    name: 'balanceOf',
+    inputs: [{ name: 'account', type: 'address' }],
+    outputs: [{ type: 'uint256' }],
+    stateMutability: 'view',
+  },
   // Deposit/mint with Pyth
   {
     type: 'function',

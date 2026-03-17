@@ -128,6 +128,15 @@ export const vaultHolder = onchainTable(
   }),
 )
 
+export const vaultState = onchainTable('vault_state', (t) => ({
+  id: t.hex().primaryKey(), // vault address
+  paused: t.boolean().notNull(),
+  redemptionFeeBps: t.integer().notNull(),
+  managementFeeBps: t.integer().notNull(),
+  lastUpdatedBlock: t.integer().notNull(),
+  lastUpdatedTimestamp: t.timestamp({ withTimezone: true }).notNull(),
+}))
+
 export const holderPoints = onchainTable(
   'holder_points',
   (t) => ({

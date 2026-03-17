@@ -17,12 +17,27 @@ import {
   previewMint,
   simulateTx,
 } from './simulate'
+import { getVaultData } from './vault-data'
 
 const hexString = t.String({ pattern: '^0x[0-9a-fA-F]+$' })
 
 const app = new Elysia()
   .use(corsHeaders(process.env.CORS_ORIGIN))
   .get('/health', () => ({ status: 'ok' }))
+
+  // ─── Vault Data (replaces ~20 frontend RPC calls with 1 API call) ───────────
+  .get(
+    '/vault/:address',
+    async ({ params, query }) => {
+      const vault = params.address as Address
+      const user = query.user as Address | undefined
+      return getVaultData(vault, user)
+    },
+    {
+      params: t.Object({ address: hexString }),
+      query: t.Object({ user: t.Optional(hexString) }),
+    },
+  )
 
   // ─── Deposit / Mint ─────────────────────────────────────────────────────────
   .post(
