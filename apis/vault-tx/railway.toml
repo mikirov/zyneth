@@ -3,6 +3,7 @@ builder = "DOCKERFILE"
 dockerfilePath = "./apis/vault-tx/Dockerfile"
 watchPatterns = [
     "apis/vault-tx/**",
+    "packages/**",
     "!/*.md",
     "bun.lock",
     "package.json",

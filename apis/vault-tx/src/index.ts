@@ -173,6 +173,6 @@ const app = new Elysia()
     },
   )
 
-  .listen(PORT)
+  .listen({ hostname: '0.0.0.0', port: PORT })
 
 export type App = typeof app
