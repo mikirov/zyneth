@@ -11,6 +11,7 @@ import {
 } from './calldata'
 import { PORT } from './config'
 import { fetchPriceUpdate, getVaultFeedIds } from './pyth'
+import { startPythWorker } from './pyth-worker'
 import {
   convertToAssets,
   previewDeposit,
@@ -189,5 +190,8 @@ const app = new Elysia()
   )
 
   .listen({ hostname: '0.0.0.0', port: PORT })
+
+// Start background Pyth SSE price streaming worker
+startPythWorker()
 
 export type App = typeof app
