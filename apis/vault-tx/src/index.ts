@@ -176,7 +176,7 @@ const app = new Elysia()
           ? { type: 'basket' as const }
           : { assetsOut: (await convertToAssets(vault, shares)).toString() }
 
-      return { tx, simulation: 'ok', preview }
+      return { tx, simulation: 'ok', preview, mode }
     },
     {
       body: t.Object({
