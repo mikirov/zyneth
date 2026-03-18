@@ -175,6 +175,29 @@ export const vaultAbi = [
     outputs: [],
     stateMutability: 'payable',
   },
+  // batchExecute (rebalance)
+  {
+    type: 'function',
+    name: 'batchExecute',
+    inputs: [
+      { name: 'targets', type: 'address[]' },
+      { name: 'values', type: 'uint256[]' },
+      { name: 'data', type: 'bytes[]' },
+      { name: 'tokensIn', type: 'address[]' },
+      {
+        name: 'outputCheck',
+        type: 'tuple',
+        components: [
+          { name: 'tokensOut', type: 'address[]' },
+          { name: 'expectedAmountsOut', type: 'uint256[]' },
+          { name: 'slippageBps', type: 'uint256' },
+        ],
+      },
+      { name: 'pythUpdateData', type: 'bytes[]' },
+    ],
+    outputs: [{ type: 'bytes[]' }],
+    stateMutability: 'payable',
+  },
   // Custom errors
   { type: 'error', name: 'VaultPaused', inputs: [] },
   { type: 'error', name: 'VaultNotPaused', inputs: [] },

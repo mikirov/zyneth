@@ -121,3 +121,30 @@ export function encodeRedeemInKind(
     value: PYTH_FEE_BUFFER.toString(),
   }
 }
+
+export interface BatchOutputCheck {
+  tokensOut: Address[]
+  expectedAmountsOut: bigint[]
+  slippageBps: bigint
+}
+
+export function encodeBatchExecute(
+  vault: Address,
+  targets: Address[],
+  values: bigint[],
+  calldatas: Hex[],
+  tokensIn: Address[],
+  outputCheck: BatchOutputCheck,
+  pythUpdateData: Hex[],
+  totalEthValue: bigint,
+): TxData {
+  return {
+    to: vault,
+    data: encodeFunctionData({
+      abi: vaultAbi,
+      functionName: 'batchExecute',
+      args: [targets, values, calldatas, tokensIn, outputCheck, pythUpdateData],
+    }),
+    value: (totalEthValue + PYTH_FEE_BUFFER).toString(),
+  }
+}

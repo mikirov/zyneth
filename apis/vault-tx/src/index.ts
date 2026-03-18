@@ -2,6 +2,8 @@ import { corsHeaders } from '@zyneth/api-utils'
 import { Elysia, t } from 'elysia'
 import type { Address, Hex } from 'viem'
 import {
+  type BatchOutputCheck,
+  encodeBatchExecute,
   encodeDeposit,
   encodeDepositWithPermit,
   encodeMint,
@@ -185,6 +187,67 @@ const app = new Elysia()
         receiver: hexString,
         owner: hexString,
         mode: t.Union([t.Literal('usdc'), t.Literal('basket')]),
+      }),
+    },
+  )
+
+  // ─── Rebalance (admin batchExecute) ──────────────────────────────────────
+  .post(
+    '/tx/rebalance',
+    async ({ body }) => {
+      const vault = body.vault as Address
+      const targets = body.targets.map((t) => t as Address)
+      const values = body.values.map((v) => BigInt(v))
+      const calldatas = body.calldatas as Hex[]
+      const tokensIn = body.tokensIn.map((t) => t as Address)
+      const outputCheck: BatchOutputCheck = {
+        tokensOut: body.outputCheck.tokensOut.map((t) => t as Address),
+        expectedAmountsOut: body.outputCheck.expectedAmountsOut.map((a) =>
+          BigInt(a),
+        ),
+        slippageBps: BigInt(body.outputCheck.slippageBps),
+      }
+      const owner = body.owner as Address
+
+      // Fetch Pyth prices
+      const feedIds = getVaultFeedIds(vault)
+      const pythUpdateData = await fetchPriceUpdate(feedIds)
+
+      // Total ETH value for swap calls (sum of values)
+      const totalEthValue = values.reduce((sum, v) => sum + v, 0n)
+
+      const tx = encodeBatchExecute(
+        vault,
+        targets,
+        values,
+        calldatas,
+        tokensIn,
+        outputCheck,
+        pythUpdateData,
+        totalEthValue,
+      )
+
+      // Simulate with owner address
+      const sim = await simulateTx(tx, owner)
+      if (!sim.success) {
+        return { tx, simulation: { error: sim.error } }
+      }
+
+      return { tx, simulation: 'ok' }
+    },
+    {
+      body: t.Object({
+        vault: hexString,
+        owner: hexString,
+        targets: t.Array(hexString),
+        values: t.Array(t.String()),
+        calldatas: t.Array(hexString),
+        tokensIn: t.Array(hexString),
+        outputCheck: t.Object({
+          tokensOut: t.Array(hexString),
+          expectedAmountsOut: t.Array(t.String()),
+          slippageBps: t.String(),
+        }),
       }),
     },
   )
