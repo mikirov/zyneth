@@ -88,9 +88,9 @@ function decodeRevertError(err: unknown): string {
   // Fallback: extract from top-level message
   const msg = err.message
 
-  // Detect "unknown reason" reverts that are likely ERC20 transferFrom failures
+  // Detect generic reverts — don't assume the cause, just say it would revert
   if (msg.includes('unknown reason') || msg.includes('reverted')) {
-    return 'Transaction would revert. Check your USDC balance and vault allowance.'
+    return 'Transaction would revert. Prices may be stale — please try again.'
   }
 
   const reasonMatch = msg.match(/reason:\s*(.+?)(?:\n|$)/)
