@@ -86,24 +86,6 @@ export function encodeMintWithPermit(
   }
 }
 
-export function encodeRedeem(
-  vault: Address,
-  shares: bigint,
-  receiver: Address,
-  owner: Address,
-  pythUpdateData: Hex[],
-): TxData {
-  return {
-    to: vault,
-    data: encodeFunctionData({
-      abi: vaultAbi,
-      functionName: 'redeem',
-      args: [shares, receiver, owner, pythUpdateData],
-    }),
-    value: PYTH_FEE_BUFFER.toString(),
-  }
-}
-
 export function encodeRedeemInKind(
   vault: Address,
   shares: bigint,

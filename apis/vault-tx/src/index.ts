@@ -8,18 +8,12 @@ import {
   encodeDepositWithPermit,
   encodeMint,
   encodeMintWithPermit,
-  encodeRedeem,
   encodeRedeemInKind,
 } from './calldata'
 import { PORT } from './config'
 import { fetchPriceUpdate, getVaultFeedIds } from './pyth'
 import { startPythWorker } from './pyth-worker'
-import {
-  convertToAssets,
-  previewDeposit,
-  previewMint,
-  simulateTx,
-} from './simulate'
+import { previewDeposit, previewMint, simulateTx } from './simulate'
 import { getVaultData } from './vault-data'
 
 const hexString = t.String({ pattern: '^0x[0-9a-fA-F]+$' })
@@ -158,27 +152,24 @@ const app = new Elysia()
       const shares = BigInt(body.shares)
       const receiver = body.receiver as Address
       const owner = body.owner as Address
-      const mode = body.mode
 
       const feedIds = await getVaultFeedIds(vault)
       const pythUpdateData = await fetchPriceUpdate(feedIds)
 
-      const tx =
-        mode === 'basket'
-          ? encodeRedeemInKind(vault, shares, receiver, owner, pythUpdateData)
-          : encodeRedeem(vault, shares, receiver, owner, pythUpdateData)
+      const tx = encodeRedeemInKind(
+        vault,
+        shares,
+        receiver,
+        owner,
+        pythUpdateData,
+      )
 
       const sim = await simulateTx(tx, owner)
       if (!sim.success) {
         return { tx, simulation: { error: sim.error }, preview: null }
       }
 
-      const preview =
-        mode === 'basket'
-          ? { type: 'basket' as const }
-          : { assetsOut: (await convertToAssets(vault, shares)).toString() }
-
-      return { tx, simulation: 'ok', preview, mode }
+      return { tx, simulation: 'ok', preview: { type: 'basket' as const } }
     },
     {
       body: t.Object({
@@ -186,7 +177,6 @@ const app = new Elysia()
         shares: t.String(),
         receiver: hexString,
         owner: hexString,
-        mode: t.Union([t.Literal('usdc'), t.Literal('basket')]),
       }),
     },
   )

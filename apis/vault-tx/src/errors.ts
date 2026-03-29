@@ -13,7 +13,6 @@ export const REVERT_MESSAGES: Record<string, string> = {
   BasketTooLarge: 'Basket exceeds maximum token count.',
   PointsTimestampInFuture: 'Timestamp cannot be in the future.',
   PointsTimestampBeforeDeployment: 'Timestamp cannot be before deployment.',
-  DeployedAtAlreadySet: 'Deployment timestamp is already set.',
   StalePrices: 'Token prices are stale. Please try again in a moment.',
   MissingFeedId: 'Missing Pyth price feed for a basket token.',
   PythUpdateRequired: 'Price update is required for this operation.',

@@ -153,18 +153,6 @@ export const vaultAbi = [
   // Redeem
   {
     type: 'function',
-    name: 'redeem',
-    inputs: [
-      { name: 'shares', type: 'uint256' },
-      { name: 'receiver', type: 'address' },
-      { name: 'owner_', type: 'address' },
-      { name: 'pythUpdateData', type: 'bytes[]' },
-    ],
-    outputs: [{ type: 'uint256' }],
-    stateMutability: 'payable',
-  },
-  {
-    type: 'function',
     name: 'redeemInKind',
     inputs: [
       { name: 'shares', type: 'uint256' },
